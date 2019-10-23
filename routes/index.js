@@ -8,14 +8,14 @@ var AuthenticationContext = require('adal-node').AuthenticationContext;
 //and stored in app settings file or in global variables
  
 //OAuth Token Endpoint
-var authorityUrl = 'https://login.microsoftonline.com/126c88aa-632c-4256-8604-60eeef899281/oauth2/token';
+var authorityUrl = 'https://login.microsoftonline.com/25d05c18-3fcc-4b94-b8f3-f892b43ec4e0/oauth2/token';
 //CRM Organization URL
-var resource = 'https://adnd36501.crm4.dynamics.com';
+var resource = 'https://adncor.crm4.dynamics.com';
 //Dynamics 365 Client Id when registered in Azure
-var clientId = 'c3aac0bb-bbba-4b54-b907-86d55cea55f1';
-var username = 'moustapha@adnd36501.onmicrosoft.com';
+var clientId = 'ec48cceb-a2b0-419e-aa0c-8d7630dc8155';
+var username = 'adnd34501@adncor.onmicrosoft.com';
 var password = 'azerTY1234@#$';
-var clientSecret = '=aE/JweK.oQD0:NtP4wRI8E682e:aZl8';
+var clientSecret = 'zJ@LJ5UsJ8]20=muAPigqTL@_/5]RP21';
 
 var adalContext = new AuthenticationContext(authorityUrl);
 
@@ -54,7 +54,7 @@ console.log(acquireToken)
 
 // create DynamicsWebApi object
 var dynamicsWebApi = new DynamicsWebApi({
-    webApiUrl: 'https://adnd36501.crm4.dynamics.com/api/data/v9.0/',
+    webApiUrl: 'https://adncor.crm4.dynamics.com/api/data/v9.0/',
     onTokenRefresh: acquireToken
 });
 
@@ -75,7 +75,15 @@ dynamicsWebApi.executeUnboundFunction("WhoAmI").then(function (response) {
 //     console.log(error.message);
 // });
 
-// dynamicsWebApi.retrieveAll("products", ["name", "price", "description"], "statecode eq 0").then(function (response) {
+var request = {
+    collection: "products",
+    select: ["name", "price", "description", "producturl"],
+    filter: "statecode eq 0",
+    maxPageSize: 5,
+    count: true
+};
+
+// dynamicsWebApi.retrieveMultipleRequest(request).then(function (response) {
 
 //     // var records = response.value;
 //     console.log(response.value);
@@ -86,15 +94,19 @@ dynamicsWebApi.executeUnboundFunction("WhoAmI").then(function (response) {
 // });
 
 
-router.get('/', function (req, res, next) {
-    dynamicsWebApi.retrieveAll("products", ["name", "price", "description"], "statecode eq 0").then(function (response) {
 
-    var records = response.value;
-    // var chunkSize = 3;
-    // for (var i = 0; i < response.length; i += chunkSize) {
-    //         records.push(response.slice(i, i + chunkSize));
-    //     }
-    res.render('homePage', {products: records});
+router.get('/', function (req, res, next) {
+    dynamicsWebApi.retrieveMultipleRequest(request).then(function (response) {
+        var count = response.oDataCount;
+        console.log(response.value);
+        var nextLink = response.oDataNextLink;
+        var records = response.value;
+        //console.log(records);
+        // var chunkSize = 3;
+        // for (var i = 0; i < response.length; i += chunkSize) {
+        //         records.push(response.slice(i, i + chunkSize));
+        //     }
+        res.render('homePage', {products: records});
     })
     .catch(function (error){
         console.log(error.message);
@@ -104,12 +116,33 @@ router.get('/', function (req, res, next) {
 
 
 
+router.get('/product/:id', function(req, res, next) {
+    var productId = req.params.id;
 
+    //perform a retrieve operaion
+    dynamicsWebApi.retrieve(productId, "products", ["name", "price", "description", "producturl"]).then(function (record) {
+        // var record = response.value;
+        var myRecord = [record];
+        // console.log(record);
+        res.render('product', {products: myRecord});
 
+    })
+    .catch(function (error) {
+    //catch an error
+    });
+});
 
+// productId = '993f77d7-f3f3-e911-a812-000d3a4a1025';
+// dynamicsWebApi.retrieve(productId, "products", ["name", "price", "description", "producturl"]).then(function (record) {
+//         // var record = response.value;
+//         var myRecord = [record];
+//         // record = JSON.parse(record);
+//         console.log(myRecord);
 
-
-
+//     })
+//     .catch(function (error) {
+//     //catch an error
+//     });
 
 
 
@@ -151,9 +184,25 @@ router.get("/contact", function(request, response)  {
 });
 
 router.get("/product", function(request, response)  {
-    
-    response.render("product");
+    var myRecord = [{ 
+    name: 'MS Dynamics 365 license',
+    price: '$233',
+    description: 'Microsoft Dynamics 365 license  ',
+    producturl:
+     'https://1.bp.blogspot.com/-ZCGXlOoDxMI/WUQ8-Q0e_7I/AAAAAAAAAMk/Ct-TkEcYWQY                                                                                                                -ZsvosSmcfgKIyZ3RgAjzgCPcBGAYYCw/s1600/Dynamics.png',
+    productid: '993f77d7-f3f3-e911-a812-000d3a4a1025' }]
+    response.render("product", {products : myRecord});
 });
 
 
 module.exports = router;
+
+
+
+[{ 
+    name: 'MS Dynamics 365 license',
+    price: null,
+    description: 'Microsoft Dynamics 365 license  ',
+    producturl:
+     'https://1.bp.blogspot.com/-ZCGXlOoDxMI/WUQ8-Q0e_7I/AAAAAAAAAMk/Ct-TkEcYWQY                                                                                                                -ZsvosSmcfgKIyZ3RgAjzgCPcBGAYYCw/s1600/Dynamics.png',
+    productid: '993f77d7-f3f3-e911-a812-000d3a4a1025' }]

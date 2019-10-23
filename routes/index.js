@@ -63,7 +63,7 @@ dynamicsWebApi.executeUnboundFunction("WhoAmI").then(function (response) {
 }).catch(function(error){
     console.log(error.message);
 });
-
+  
 // dynamicsWebApi.retrieveAll("leads", ["fullname", "subject"], "statecode eq 0").then(function (response) {
  
 //     var records = response.value;
@@ -123,8 +123,9 @@ router.get('/product/:id', function(req, res, next) {
     dynamicsWebApi.retrieve(productId, "products", ["name", "price", "description", "producturl"]).then(function (record) {
         // var record = response.value;
         var myRecord = [record];
+        req.session.myRecord = myRecord;
         // console.log(record);
-        res.render('product', {products: myRecord});
+        res.redirect('/product');
 
     })
     .catch(function (error) {
@@ -183,15 +184,9 @@ router.get("/contact", function(request, response)  {
     response.render("contact");
 });
 
-router.get("/product", function(request, response)  {
-    var myRecord = [{ 
-    name: 'MS Dynamics 365 license',
-    price: '$233',
-    description: 'Microsoft Dynamics 365 license  ',
-    producturl:
-     'https://1.bp.blogspot.com/-ZCGXlOoDxMI/WUQ8-Q0e_7I/AAAAAAAAAMk/Ct-TkEcYWQY                                                                                                                -ZsvosSmcfgKIyZ3RgAjzgCPcBGAYYCw/s1600/Dynamics.png',
-    productid: '993f77d7-f3f3-e911-a812-000d3a4a1025' }]
-    response.render("product", {products : myRecord});
+router.get("/product", function(req, res)  {
+    console.log(req.session.myRecord); 
+    res.render("product", {products : req.session.myRecord});
 });
 
 

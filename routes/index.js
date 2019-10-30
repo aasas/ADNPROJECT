@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var Cart = require('../public/js/cart');
 
 var DynamicsWebApi = require('dynamics-web-api');
 var AuthenticationContext = require('adal-node').AuthenticationContext;
@@ -77,7 +78,7 @@ dynamicsWebApi.executeUnboundFunction("WhoAmI").then(function (response) {
 
 var request = {
     collection: "products",
-    select: ["name", "price", "description", "producturl"],
+    select: ["name", "new_prix", "description", "producturl"],
     filter: "statecode eq 0",
     maxPageSize: 5,
     count: true
@@ -96,9 +97,10 @@ var request = {
 
 
 router.get('/', function (req, res, next) {
+    var successMsg = req.flash('success')[0];
     dynamicsWebApi.retrieveMultipleRequest(request).then(function (response) {
         var count = response.oDataCount;
-        console.log(response.value);
+        // console.log(response.value);
         var nextLink = response.oDataNextLink;
         var records = response.value;
         //console.log(records);
@@ -106,7 +108,7 @@ router.get('/', function (req, res, next) {
         // for (var i = 0; i < response.length; i += chunkSize) {
         //         records.push(response.slice(i, i + chunkSize));
         //     }
-        res.render('homePage', {products: records});
+        res.render('homePage', {products: records, successMsg: successMsg, noMessages: !successMsg});
     })
     .catch(function (error){
         console.log(error.message);
@@ -120,7 +122,7 @@ router.get('/product/:id', function(req, res, next) {
     var productId = req.params.id;
 
     //perform a retrieve operaion
-    dynamicsWebApi.retrieve(productId, "products", ["name", "price", "description", "producturl"]).then(function (record) {
+    dynamicsWebApi.retrieve(productId, "products", ["name", "new_prix", "description", "producturl"]).then(function (record) {
         // var record = response.value;
         var myRecord = [record];
         req.session.myRecord = myRecord;
@@ -133,17 +135,25 @@ router.get('/product/:id', function(req, res, next) {
     });
 });
 
-// productId = '993f77d7-f3f3-e911-a812-000d3a4a1025';
-// dynamicsWebApi.retrieve(productId, "products", ["name", "price", "description", "producturl"]).then(function (record) {
-//         // var record = response.value;
-//         var myRecord = [record];
-//         // record = JSON.parse(record);
-//         console.log(myRecord);
+router.get('/add-to-cart/:id', function(req, res, next) {
+    var productId = req.params.id;
+    var cart = new Cart(req.session.cart ? req.session.cart : {});
 
-//     })
-//     .catch(function (error) {
-//     //catch an error
-//     });
+    //perform a retrieve operaion
+    dynamicsWebApi.retrieve(productId, "products", ["name", "new_prix", "description", "producturl"]).then(function (record) {
+        // var record = response.value;
+        var myRecord = [record];
+
+        cart.add(record, productId);
+        req.session.cart = cart;
+        console.log(req.session.cart);
+        res.redirect('/product');
+
+    })
+    .catch(function (error) {
+    //catch an error
+    });
+});
 
 
 
@@ -158,6 +168,7 @@ router.get('/product/:id', function(req, res, next) {
     
 //     response.render('homePage');
 // });
+
 
 router.get("/cart", function(request, response)  {
     
@@ -184,10 +195,38 @@ router.get("/contact", function(request, response)  {
     response.render("contact");
 });
 
-router.get("/product", function(req, res)  {
-    console.log(req.session.myRecord); 
+router.get("/product", function(req, res)  { 
     res.render("product", {products : req.session.myRecord});
 });
+
+
+router.get('/shopping-cart', function(req, res, next) {
+   if (!req.session.cart) {
+       return res.render('cart', {products: null});
+   } 
+    var cart = new Cart(req.session.cart);
+    console.log(cart.generateArray());
+    res.render('cart', {products: cart.generateArray(), totalPrice: cart.totalPrice});
+});
+
+router.get('/reduce/:id', function(req, res, next) {
+    var productId = req.params.id;
+    var cart = new Cart(req.session.cart ? req.session.cart : {});
+
+    cart.reduceByOne(productId);
+    req.session.cart = cart;
+    res.redirect('/shopping-cart');
+});
+
+router.get('/remove/:id', function(req, res, next) {
+    var productId = req.params.id;
+    var cart = new Cart(req.session.cart ? req.session.cart : {});
+
+    cart.removeItem(productId);
+    req.session.cart = cart;
+    res.redirect('/shopping-cart');
+});
+
 
 
 module.exports = router;

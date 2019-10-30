@@ -75,7 +75,7 @@
 						
 						<div class="details_name"><%= product.name %></div>
 						<div class="details_discount">$890</div>
-						<div class="details_price"><%= product.price %></div>
+						<div class="details_price"><%= product.new_prix %></div>
 						
 						<!-- In Stock -->
 						<div class="in_stock_container">
@@ -88,15 +88,8 @@
 
 						<!-- Product Quantity -->
 						<div class="product_quantity_container">
-							<div class="product_quantity clearfix">
-								<span>Qty</span>
-								<input id="quantity_input" type="text" pattern="[0-9]*" value="1">
-								<div class="quantity_buttons">
-									<div id="quantity_inc_button" class="quantity_inc quantity_control"><i class="fa fa-chevron-up" aria-hidden="true"></i></div>
-									<div id="quantity_dec_button" class="quantity_dec quantity_control"><i class="fa fa-chevron-down" aria-hidden="true"></i></div>
-								</div>
-							</div>
-							<div class="button cart_button"><a href="#">Add to cart</a></div>
+							
+							<div class="button cart_button"><a href="/add-to-cart/<%= product.productid %>">Add to cart</a></div>
 						</div>
 
 						<!-- Share -->

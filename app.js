@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var expressHbs = require('express-handlebars');
 var session = require('express-session');
+var flash = require('connect-flash');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -17,6 +18,7 @@ app.set('view engine', 'ejs');
 // app.engine('.hbs', expressHbs({defaultLayout: 'layout', extname: '.hbs'}));
 // app.set('view engine', '.hbs');
 
+app.use(flash());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -28,6 +30,11 @@ app.use(session({
   saveUninitialized: false,
   cookie: { maxAge: 180 * 60 * 1000 }
 }));
+
+app.use(function(req, res, next) {
+    res.locals.session = req.session;
+    next();
+});
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
